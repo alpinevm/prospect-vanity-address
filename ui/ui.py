@@ -40,7 +40,7 @@ class App(customtkinter.CTk):
         # Switch
         self.slide_var = StringVar(value="Leading")
         self.slide_switch = customtkinter.CTkSwitch(
-            self, variable=self.slide_var, onvalue="Leading", offvalue="Trailing"
+            self, variable=self.slide_var, text='', onvalue="Leading", offvalue="Trailing"
         )
         self.slide_switch.grid(row=1, column=0)  # You may need to adjust the position
 
