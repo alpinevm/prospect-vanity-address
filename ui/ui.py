@@ -6,21 +6,37 @@ from tkinter import StringVar
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
+prospect_ascii = """
+                                     _   
+                                    | |  
+ _ __  _ __ ___  ___ _ __   ___  ___| |_ 
+| '_ \| '__/ _ \/ __| '_ \ / _ \/ __| __|
+| |_) | | | (_) \__ \ |_) |  __/ (__| |_ 
+| .__/|_|  \___/|___/ .__/ \___|\___|\__|
+| |                 | |                  
+|_|                 |_|                  
+"""
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
         # configure window
         self.title("PROSPECT")
-        self.geometry(f"{500}x{300}")
+        self.geometry(f"{600}x{400}")
 
         # configure grid layout
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure((0, 1, 2), weight=1)
 
         # Title
-        self.title_label = customtkinter.CTkLabel(self, text="PROSPECT", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.title_label = tkinter.Text(self, bg=self.cget('bg'), height=9, width=180, bd=0, highlightthickness=0, fg="white")
+        self.title_label.tag_configure("center", justify='center')
+        self.title_label.insert('10.0', prospect_ascii)
+        self.title_label.tag_add("center", "1.0", "end")
         self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.title_label.config(state=tkinter.DISABLED)  # This will disable user interaction
+
 
         # Slide Selector
         self.slide_var = StringVar(value="Leading")
