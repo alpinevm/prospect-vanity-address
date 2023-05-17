@@ -37,22 +37,20 @@ class App(customtkinter.CTk):
         self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10))
         self.title_label.config(state=tkinter.DISABLED)  # This will disable user interaction
 
-
-        # Slide Selector
+        # Switch
         self.slide_var = StringVar(value="Leading")
         self.slide_switch = customtkinter.CTkSwitch(
             self, variable=self.slide_var, onvalue="Leading", offvalue="Trailing"
         )
         self.slide_switch.grid(row=1, column=0)  # You may need to adjust the position
 
-
-        # Add labels for the switch
+        # Switch Labels
         self.leading_label = customtkinter.CTkLabel(self, text="LEADING")
         self.leading_label.grid(row=1, column=0, sticky="e")  # You may need to adjust the position
         self.trailing_label = customtkinter.CTkLabel(self, text="TRAILING")
         self.trailing_label.grid(row=1, column=0, sticky="w")  # You may need to adjust the position
 
-        # Search String Entry
+        # Search String Input
         self.search_entry_label = customtkinter.CTkLabel(self, text="Search String:", anchor="w")
         self.search_entry_label.grid(row=2, column=0, padx=20, pady=(10, 0))
         self.search_entry = customtkinter.CTkEntry(self, placeholder_text="1a2b3c")
@@ -61,7 +59,7 @@ class App(customtkinter.CTk):
 
         # Search Button
         self.search_button = customtkinter.CTkButton(master=self, text="SEARCH", state="disabled", bg_color="gray")
-        self.search_button.grid(row=4, column=0, padx=20, pady=(10, 10), sticky="ew")
+        self.search_button.grid(row=4, column=0, padx=20, pady=(10, 30), sticky="ew")
 
     def enable_search_button(self, event):
         self.search_button.configure(state="normal", bg_color="blue")
