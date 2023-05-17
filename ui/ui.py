@@ -17,6 +17,12 @@ prospect_ascii = """
 |_|                 |_|                  
 """
 
+primary_blue = "#307BF4"
+secondary_blue = "#232A37"
+tertiary_blue = '#213f72'
+mid_blue = '#37669D'
+dark_gray = "#282828"
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -34,35 +40,45 @@ class App(customtkinter.CTk):
         self.title_label.tag_configure("center", justify='center')
         self.title_label.insert('10.0', prospect_ascii)
         self.title_label.tag_add("center", "1.0", "end")
-        self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.title_label.grid(row=0, column=0, padx=20, pady=(0, 10))
         self.title_label.config(state=tkinter.DISABLED)  # This will disable user interaction
 
-        # Switch
-        self.slide_var = StringVar(value="Leading")
-        self.slide_switch = customtkinter.CTkSwitch(
-            self, variable=self.slide_var, text='', onvalue="Leading", offvalue="Trailing"
-        )
-        self.slide_switch.grid(row=1, column=0)  # You may need to adjust the position
-
-        # Switch Labels
-        self.leading_label = customtkinter.CTkLabel(self, text="LEADING")
-        self.leading_label.grid(row=1, column=0, sticky="e")  # You may need to adjust the position
-        self.trailing_label = customtkinter.CTkLabel(self, text="TRAILING")
-        self.trailing_label.grid(row=1, column=0, sticky="w")  # You may need to adjust the position
-
         # Search String Input
-        self.search_entry_label = customtkinter.CTkLabel(self, text="Search String:", anchor="w")
-        self.search_entry_label.grid(row=2, column=0, padx=20, pady=(10, 0))
-        self.search_entry = customtkinter.CTkEntry(self, placeholder_text="1a2b3c")
-        self.search_entry.grid(row=3, column=0, padx=20, pady=(10, 10), sticky="ew")
+        self.search_entry_label = customtkinter.CTkLabel(self, text="Enter a Search String:", anchor="e")
+        self.search_entry_label.grid(row=1, column=0, padx=20, pady=(0, 0))
+        self.search_entry = customtkinter.CTkEntry(self, placeholder_text="C0FFEE")
+        self.search_entry.grid(row=2, column=0, padx=20, pady=(0, 0), sticky="ew")
         self.search_entry.bind("<Key>", self.enable_search_button)
 
+        # Button Frame
+        self.button_frame = customtkinter.CTkFrame(self)
+        self.button_frame.grid(row=4, column=0, pady=(0, 5))
+
+        # Buttons
+        self.start_button = customtkinter.CTkButton(self.button_frame, text="STARTS WITH", fg_color=("white", primary_blue), hover_color=(tertiary_blue))
+        self.start_button.bind("<Button-1>", self.toggle_ends_button)
+        self.start_button.pack(side="left", padx=2)
+
+        self.end_button = customtkinter.CTkButton(self.button_frame, text="ENDS WITH", fg_color=("white", dark_gray), hover_color=(tertiary_blue))
+        self.end_button.bind("<Button-1>", self.toggle_starts_button)
+        self.end_button.pack(side="left", padx=2)
+
         # Search Button
-        self.search_button = customtkinter.CTkButton(master=self, text="SEARCH", state="disabled", bg_color="gray")
-        self.search_button.grid(row=4, column=0, padx=20, pady=(10, 30), sticky="ew")
+        self.search_button = customtkinter.CTkButton(master=self, text="SEARCH", state="disabled", bg_color=self.cget('bg'))
+        self.search_button.grid(row=6, column=0, padx=200, pady=(10, 30), sticky="ew")
+
+
+    def toggle_ends_button(self, event):
+        self.start_button.configure(fg_color=("white", primary_blue))
+        self.end_button.configure(fg_color=("white", dark_gray))
+
+    def toggle_starts_button(self, event):
+        self.end_button.configure(fg_color=("white", primary_blue))
+        self.start_button.configure(fg_color=("white", dark_gray))
+
 
     def enable_search_button(self, event):
-        self.search_button.configure(state="normal", bg_color="blue")
+        self.search_button.configure(state="normal", fg_color=(primary_blue), hover_color=(tertiary_blue), bg_color=self.cget('bg'))
 
 
 if __name__ == "__main__":
