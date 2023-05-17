@@ -27,11 +27,12 @@ class App(customtkinter.CTk):
         self.slide_switch = customtkinter.CTkSwitch(
             self, variable=self.slide_var, onvalue="Leading", offvalue="Trailing"
         )
-        self.slide_switch.grid(row=10, column=0)  # You may need to adjust the position
+        self.slide_switch.grid(row=1, column=0)  # You may need to adjust the position
+
 
         # Add labels for the switch
         self.leading_label = customtkinter.CTkLabel(self, text="LEADING")
-        self.leading_label.grid(row=1, column=-0, sticky="e")  # You may need to adjust the position
+        self.leading_label.grid(row=1, column=0, sticky="e")  # You may need to adjust the position
         self.trailing_label = customtkinter.CTkLabel(self, text="TRAILING")
         self.trailing_label.grid(row=1, column=0, sticky="w")  # You may need to adjust the position
 
