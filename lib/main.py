@@ -1,4 +1,5 @@
 import os
+import threading
 import re
 import time
 import platform
@@ -57,8 +58,20 @@ def sanity_check(address: str, matching: str, prefix: bool = True) -> bool:
     else:
         return address.endswith(matching)
 
+def address_can_be_mined(matching: str) -> bool:
+    # check each character see if they are a valid hex character
+    for char in matching:
+        if char not in "0123456789abcdef":
+            return False
+    return True
+
 # only handle leading matches
 def init_miner(matching: str) -> Generator:
+    # check if the address can be mined
+    if not address_can_be_mined(matching):
+        yield {"message": "Address cannot be mined", "state": MinerOutputState.ERROR}
+        return
+
     seed_private_key, seed_public_key = create_seed_wallet()
     try:
         binary_dir, miner_binary = binary_switcher()
@@ -68,19 +81,18 @@ def init_miner(matching: str) -> Generator:
 
     # Start the miner
     print("Starting miner...")
-    process = subprocess.Popen([miner_binary, "--matching", matching, "-z", seed_public_key[2:]], stdout=subprocess.PIPE, cwd=binary_dir)
+    process = subprocess.Popen([miner_binary, "--matching", matching, "-z", seed_public_key[2:]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=binary_dir)
+    # creating mining stderr reading thread
     
     STATE = InternalState.STARTING
+
     buffer = b""
-    mining_buffer = b""
     while True:
-        chunk = process.stdout.read(1)
-        if chunk == b'':
+        chunk = process.stdout.read(1)  # read byte by byte
+        if chunk == b'':  # end of output
             break
         buffer += chunk
-        mining_buffer += chunk
-        if chunk.endswith(b'\n'):
-            # print(buffer.decode(), end='')
+        if chunk in [b'\n', b'\r']:
             output = buffer.decode().strip()
             buffer = b""
             if InternalState.STARTING == STATE:
@@ -102,15 +114,12 @@ def init_miner(matching: str) -> Generator:
                         yield {"data": {"address": address, "private_key": final_key}, "state": MinerOutputState.FOUND}
                         #TODO: Change this to not be a kill when we switch to leading
                         process.kill()
+                        break
                     else:
-                        pass
-                        # print("Internal error: Key does not match address")
-        # if chunk.endswith(b'\r'):  # look for '\r' instead of '\n'
-            # yield { "data": mining_buffer.decode(), end='')
-            # mining_buffer = b""
-            # print("PLEASE", chunk.decode(), end='')
-            # if TriggerPhrases.MINING_SPEED in chunk.decode().strip():
-            #     yield {"data": , "state": MinerOutputState.MINING_SPEED}
+                        print("Address does not truly match", address, final_key)
+                elif TriggerPhrases.MINING_SPEED in output:
+                    match = re.search(r'Total:\s*(?P<total>[^\-]+)', output)
+                    yield {"data": output, "state": MinerOutputState.MINING_SPEED}
 
 def dummy_miner(matching: str) -> Generator:
     while True:
@@ -119,7 +128,7 @@ def dummy_miner(matching: str) -> Generator:
 
 if __name__ == '__main__':
     # test
-    miner = init_miner("1231231")
+    miner = init_miner("b00bb00b")
     for data in miner:
         print("FROM GEN", data)
 
