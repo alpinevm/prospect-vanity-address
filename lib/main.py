@@ -33,6 +33,8 @@ class TriggerPhrases:
 def binary_switcher() -> tuple:
     op_s = platform.system()
     arch = platform.machine()
+    print (op_s, arch)
+
     if op_s == "Darwin":
         if arch == "arm64":
             filepath = "./bin/macos-arm64/profanity2-macos-arm64"
@@ -40,6 +42,12 @@ def binary_switcher() -> tuple:
             os.chmod(filepath, permissions | 0o111)
             # include start commmand
             return "./bin/macos-arm64", "./profanity2-macos-arm64"
+        if arch == "x86_64":
+            filepath = "./bin/macos-x86_64/profanity2-macos-x86_64"
+            permissions = os.stat(filepath).st_mode
+            os.chmod(filepath, permissions | 0o111)
+            # include start commmand
+            return "./bin/macos-x86_64", "./profanity2-macos-x86_64"
 
     raise Exception("No binary found for your OS (" + op_s + ") and architecture (" + arch + ")")
 
@@ -128,7 +136,7 @@ def dummy_miner(matching: str) -> Generator:
 
 if __name__ == '__main__':
     # test
-    miner = init_miner("b00bb00b")
+    miner = init_miner("69696969")
     for data in miner:
         print("FROM GEN", data)
 
