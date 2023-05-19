@@ -1,11 +1,12 @@
 import tkinter
 import tkinter.messagebox
-from lib.main import MinerOutputState, dummy_miner
+from lib.main import MinerOutputState, dummy_miner, start_search
 import customtkinter
 from tkinter import StringVar
+import pyperclip
 
-customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
+customtkinter.set_appearance_mode("Dark")
+customtkinter.set_default_color_theme("dark-blue")
 
 prospect_ascii = """
                                      _   
@@ -18,20 +19,20 @@ prospect_ascii = """
 |_|                 |_|                  
 """
 
-# Data
-is_mining = False
-current_mining_speed = 0
-GPUs = ''
-addresses_found = ''
-is_errored = False
-error_message = ''
-
-# Colors
+# colors (スペースゴッド)
 primary_blue = "#307BF4"
 secondary_blue = "#232A37"
 tertiary_blue = '#213f72'
 mid_blue = '#37669D'
 dark_gray = "#282828"
+redFaded= '#AD2B2B'
+redLight= '#fa4142'
+redDark= '#af2d2e'
+errorRed= '#D50000'
+successGreen= '#2ABA75'
+successGreenDark= '#307755'
+yellow= '#FFDC00'
+yellowDark= '#FFC400'
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -39,50 +40,43 @@ class App(customtkinter.CTk):
 
         # configure window
         self.title("PROSPECT")
-        self.geometry(f"{600}x{400}")
+        self.geometry(f"{600}x{335}")
 
         # configure grid layout
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure((0, 1, 2), weight=1)
 
-        # Title
+        # ASCII
         self.title_label = tkinter.Text(self, bg=self.cget('bg'), height=9, width=180, bd=0, highlightthickness=0, fg="white")
         self.title_label.tag_configure("center", justify='center')
-        self.title_label.insert('10.0', prospect_ascii)
+        self.title_label.insert('1.0', prospect_ascii)
         self.title_label.tag_add("center", "1.0", "end")
         self.title_label.grid(row=0, column=0, padx=20, pady=(0, 0))
         self.title_label.config(state=tkinter.DISABLED)  # This will disable user interaction
 
-        # Search String Input
+        # enter search string 
         self.search_entry_label = customtkinter.CTkLabel(self, text="Enter a Search String:", anchor="e")
         self.search_entry_label.grid(row=1, column=0, padx=20, pady=(0, 0))
-        self.search_entry = customtkinter.CTkEntry(self, placeholder_text="C0FFEE")
+        # search string input form
+        self.search_entry = customtkinter.CTkEntry(self, placeholder_text="'C0FFEE'")
         self.search_entry.grid(row=1, column=0, padx=20, pady=(60, 0), sticky="ew")
+        # update search button on type
         self.search_entry.bind("<Key>", self.enable_search_button)
 
-        # Button Frame
+        # button frames
         self.button_frame = customtkinter.CTkFrame(self)
         self.button_frame.grid(row=2, column=0, pady=(20, 10))
-
-        # Buttons
-        self.start_button = customtkinter.CTkButton(self.button_frame, text="STARTS WITH", fg_color=("white", primary_blue), hover_color=(mid_blue))
+        # start button
+        self.start_button = customtkinter.CTkButton(self.button_frame, width=40, text="START", fg_color=("white", primary_blue), hover_color=(mid_blue))
         self.start_button.bind("<Button-1>", self.toggle_ends_button)
         self.start_button.pack(side="left", padx=2)
-
-        self.end_button = customtkinter.CTkButton(self.button_frame, text="ENDS WITH", fg_color=("white", dark_gray), hover_color=(mid_blue))
+        #end button
+        self.end_button = customtkinter.CTkButton(self.button_frame, text="END", width=40, fg_color=("white", dark_gray), hover_color=(mid_blue))
         self.end_button.bind("<Button-1>", self.toggle_starts_button)
         self.end_button.pack(side="left", padx=2)
 
-        # Search Button
-        self.search_button = customtkinter.CTkButton(master=self, command=self.start_mining, text="START SEARCH", state="disabled", bg_color=self.cget('bg'))
-        self.search_button.grid(row=6, column=0, padx=200, pady=(10, 30), sticky="ew")
-
-        # Store the original UI state
-        self.original_ui_state = self.state()
-
-    def start_mining(self):
-        # INSERT UI SWITCHING HERE
-        pass
+        # Start Search Button
+        self.search_button = customtkinter.CTkButton(master=self, command=self.start_search, height=40, text="START SEARCH", state="disabled", bg_color=self.cget('bg'))
+        self.search_button.grid(row=6, column=0, padx=200, pady=(12, 20), sticky="ew")
 
     def toggle_ends_button(self, event):
         self.start_button.configure(fg_color=("white", primary_blue))
@@ -92,9 +86,106 @@ class App(customtkinter.CTk):
         self.end_button.configure(fg_color=("white", primary_blue))
         self.start_button.configure(fg_color=("white", dark_gray))
 
-
     def enable_search_button(self, event):
+        #TODO add isSearching bool check
         self.search_button.configure(state="normal", fg_color=(primary_blue), hover_color=(tertiary_blue), bg_color=self.cget('bg'))
+
+    def start_search(self):        
+        # Create Search Screen
+        self.search_screen = SearchScreen(master=self, width=600, search_str=self.search_entry.get(), height=400, corner_radius=10, bg_color=self.cget('bg'))
+        self.search_screen.grid(row=10, rowspan=10, pady=(0, 5), column=0)
+        # Resize Window
+        self.geometry(f"{600}x{600}")
+        # Stop Search Button
+        self.search_button.configure(state="normal", fg_color=('#333333'), hover_color=('#555555'), text="STOP SEARCH", command=self.stop_search, bg_color=self.cget('bg'))
+        # Disable Search Entry
+        self.search_entry.configure(state='disabled')
+
+    def stop_search(self):
+        # Resize Window
+        self.geometry(f"{600}x{335}")
+        # Destroy Search Screen
+        self.search_screen.destroy()
+        # Enable Search Button
+        self.search_button.configure(state="normal", fg_color=(primary_blue), hover_color=(tertiary_blue), text="START SEARCH", command=self.start_search, bg_color=self.cget('bg'))        
+        # Enable Search Entry
+        self.search_entry.configure(state='normal')
+
+class SearchScreen(customtkinter.CTkFrame):
+    def __init__(self, master, search_str, **kwargs):
+        super().__init__(master, **kwargs)
+
+
+        #TODO @ALPINE plz implement this async and populate below data variables
+
+        # start_search(search_str)
+
+        # DATA
+        is_searching = True 
+        is_errored = False
+        is_found = False
+        current_search_speed = 189.905
+        device_data = 'GPU0: Apple M1 Max, 51539607552 bytes available, 32 compute units (precompiled = no)'
+        error_message = 'You messed up big time ligma balls fr'
+        found_address = '0xaaa2323a1fbec2e7e418eae55afcb0d2854b9436'
+        found_pky = '0xa671038e0a59e034cd2868de98b52f67107219614b94a694b2173868155163a7'
+        estimated_time = '13.43 seconds 50% - 2.43 mins 90% - 5.43 mins 99%'
+        time_to_find = '14.54 seconds' # this should also be the time elapsed so just have this counting upwards when search starts
+
+        if is_searching:
+            # time elapsed
+            self.current_search_speed_label = customtkinter.CTkLabel(self, text=("Time Elapsed: " + time_to_find), anchor="center", font=('Sans', 14), justify='center')
+            self.current_search_speed_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky='ew')  
+            # speed
+            self.current_search_speed_value = customtkinter.CTkLabel(self, text=current_search_speed, anchor="center", text_color=successGreen, font=('Sans', 90), justify='center')
+            self.current_search_speed_value.grid(row=11, column=0, padx=10, pady=(5, 0), sticky='ew')
+            # MH/s
+            self.current_search_speed_mhs = customtkinter.CTkLabel(self, text="MH/s", anchor="center", text_color=successGreen, font=('Sans', 18), justify='center')
+            self.current_search_speed_mhs.grid(row=12, column=0, padx=10, pady=(0, 0), sticky='ew')
+            # device data
+            self.device_data_value = customtkinter.CTkLabel(self, text=("Estimated Time: " +estimated_time + ("\n") + device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+            self.device_data_value.grid(row=15, column=0, padx=30, pady=(30, 10))
+        if is_errored:
+            # search failed
+            self.current_search_speed_label = customtkinter.CTkLabel(self, text=("Search Failed"), anchor="center", font=('Sans', 14), justify='center')
+            self.current_search_speed_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky='ew')  
+            # error text
+            self.current_search_err_label = customtkinter.CTkLabel(self, text="FATAL ERROR", anchor="center", text_color=errorRed, font=('Sans', 70), justify='center')
+            self.current_search_err_label.grid(row=11, column=0, padx=10, pady=(20, 0), sticky='ew')
+            # error msg
+            self.current_search_err_label_text = customtkinter.CTkLabel(self, text=error_message, anchor="center", text_color=redLight, font=('Sans', 15), justify='center')
+            self.current_search_err_label_text.grid(row=12, column=0, padx=10, pady=(0, 0), sticky='ew')
+            # device data
+            self.device_data_value = customtkinter.CTkLabel(self, text=(device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+            self.device_data_value.grid(row=15, column=0, padx=30, pady=(45, 5))
+        if is_found:  
+            self.value_found = customtkinter.CTkLabel(self, text="ADDRESS MATCH FOUND!", anchor="center", text_color=successGreen, font=('Sans', 35), justify='center')
+            self.value_found.grid(row=11, column=0, padx=10, pady=(5, 0), sticky='ew')
+            # address
+            self.address = customtkinter.CTkLabel(self, text=(found_address), anchor="center", font=('Sans', 13), text_color=successGreenDark, justify='center')
+            self.address.grid(row=13, column=0, padx=30, pady=(10, 5))
+            # copy address button
+            self.copy_address_button = customtkinter.CTkButton(master=self, command=self.copy_address, fg_color=successGreenDark, hover_color=successGreenDark, text="Copy Address")
+            self.copy_address_button.grid(row=14, column=0, padx=160, pady=(0, 0), sticky="ew")
+            # pkey
+            self.pkey = customtkinter.CTkLabel(self, text=(found_pky), anchor="center", font=('Sans', 13), text_color=redFaded, justify='center')
+            self.pkey.grid(row=15, column=0, padx=30, pady=(10, 5))
+            # copy pkey button
+            self.copy_pkey_button = customtkinter.CTkButton(master=self, command=self.copy_pkey, fg_color=redDark, hover_color=redFaded, text="Copy Private Key")
+            self.copy_pkey_button.grid(row=16, column=0, padx=160, pady=(0, 10), sticky="ew")
+            # time elapsed & device data
+            self.device_data_value = customtkinter.CTkLabel(self, text=("Time Elapsed - " + time_to_find + ("\n") + device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+            self.device_data_value.grid(row=17, column=0, padx=30, pady=(15, 5))
+
+    def copy_address(self):
+        address = self.address.cget("text")
+        pyperclip.copy(address)
+        self.copy_address_button.configure(text='Address Copied!')
+
+    def copy_pkey(self):
+        pkey = self.pkey.cget("text")
+        pyperclip.copy(pkey)
+        self.copy_pkey_button.configure(text='Private Key Copied!')
 
 
 if __name__ == "__main__":

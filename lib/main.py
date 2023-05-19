@@ -134,9 +134,11 @@ def dummy_miner(matching: str) -> Generator:
         yield {"data": "70 MH/S", "state": MinerOutputState.MINING_SPEED}
         time.sleep(1)
 
-if __name__ == '__main__':
-    # test
-    miner = init_miner("69696969")
+def start_search(search_string: str):
+    miner = init_miner(search_string)
     for data in miner:
         print("FROM GEN", data)
 
+if __name__ == '__main__':
+    string = input("Enter search string: ")
+    start_search(string)
