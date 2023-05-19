@@ -18,6 +18,8 @@ class MinerOutputState (enum.Enum):
     ERROR = 3
     DEVICE_DATA = 4
 
+    INITIALIZING = 5
+
 class InternalState (enum.Enum):
     STARTING = 1
     MINING = 2
@@ -28,6 +30,7 @@ class TriggerPhrases:
     READ_DEVICES_END = "Initializing OpenCL..." 
     GEN_KEY = "Private:"
     MINING_SPEED = "Total:"
+
 
 # Get's the filename of the binary needed based on the users OS and architecture
 def binary_switcher() -> tuple:
@@ -93,7 +96,6 @@ def init_miner(matching: str) -> Generator:
     # creating mining stderr reading thread
     
     STATE = InternalState.STARTING
-
     buffer = b""
     while True:
         chunk = process.stdout.read(1)  # read byte by byte
@@ -126,8 +128,12 @@ def init_miner(matching: str) -> Generator:
                     else:
                         print("Address does not truly match", address, final_key)
                 elif TriggerPhrases.MINING_SPEED in output:
-                    match = re.search(r'Total:\s*(?P<total>[^\-]+)', output)
-                    yield {"data": output, "state": MinerOutputState.MINING_SPEED}
+                    match = re.search(r'Total:\s*(?P<total>\d+\.\d+)\s*(?P<unit>\w+)', output)
+                    if match is None:
+                        continue
+                    total = float(match.group('total'))
+                    unit = match.group('unit')
+                    yield {"data": {"speed": total, "units": unit}, "state": MinerOutputState.MINING_SPEED}
 
 def dummy_miner(matching: str) -> Generator:
     while True:

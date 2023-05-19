@@ -1,9 +1,17 @@
 import tkinter
 import tkinter.messagebox
-from lib.main import MinerOutputState, dummy_miner, start_search
+from lib.main import MinerOutputState, dummy_miner, start_search, init_miner
 import customtkinter
 from tkinter import StringVar
 import pyperclip
+from multiprocessing import Process, Queue
+
+# This function runs in a separate process
+def data_collector(queue, search_str):
+    datafeed = init_miner(search_str) 
+    for data in datafeed:
+        queue.put(data)
+    print("Exiting miner process")
 
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("dark-blue")
@@ -114,38 +122,41 @@ class App(customtkinter.CTk):
 class SearchScreen(customtkinter.CTkFrame):
     def __init__(self, master, search_str, **kwargs):
         super().__init__(master, **kwargs)
-
-
-        #TODO @ALPINE plz implement this async and populate below data variables
-
-        # start_search(search_str)
-
         # DATA
-        is_searching = True 
-        is_errored = False
-        is_found = False
-        current_search_speed = 189.905
-        device_data = 'GPU0: Apple M1 Max, 51539607552 bytes available, 32 compute units (precompiled = no)'
-        error_message = 'You messed up big time ligma balls fr'
-        found_address = '0xaaa2323a1fbec2e7e418eae55afcb0d2854b9436'
-        found_pky = '0xa671038e0a59e034cd2868de98b52f67107219614b94a694b2173868155163a7'
-        estimated_time = '13.43 seconds 50% - 2.43 mins 90% - 5.43 mins 99%'
-        time_to_find = '14.54 seconds' # this should also be the time elapsed so just have this counting upwards when search starts
+        self.search_str = search_str 
+        self.master = master
+        self.kwargs = kwargs
 
-        if is_searching:
+        self.miner_data_queue = Queue()
+        self.data_collector_process = Process(target=data_collector, args=(self.miner_data_queue, search_str,))
+        self.data_collector_process.start()
+
+        self.is_loading = True
+        self.is_searching = True 
+        self.is_errored = False 
+        self.is_found = False
+        self.current_search_speed = 189.905
+        self.device_data = 'GPU0: Apple M1 Max, 51539607552 bytes available, 32 compute units (precompiled = no)'
+        self.error_message = 'You messed up big time ligma balls fr'
+        self.found_address = '0xaaa2323a1fbec2e7e418eae55afcb0d2854b9436'
+        self.found_pky = '0xa671038e0a59e034cd2868de98b52f67107219614b94a694b2173868155163a7'
+        self.estimated_time = '13.43 seconds 50% - 2.43 mins 90% - 5.43 mins 99%'
+        self.time_to_find = '14.54 seconds' # this should also be the time elapsed so just have this counting upwards when search starts
+
+        if self.is_searching:
             # time elapsed
-            self.current_search_speed_label = customtkinter.CTkLabel(self, text=("Time Elapsed: " + time_to_find), anchor="center", font=('Sans', 14), justify='center')
+            self.current_search_speed_label = customtkinter.CTkLabel(self, text=("Time Elapsed: " + self.time_to_find), anchor="center", font=('Sans', 14), justify='center')
             self.current_search_speed_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky='ew')  
             # speed
-            self.current_search_speed_value = customtkinter.CTkLabel(self, text=current_search_speed, anchor="center", text_color=successGreen, font=('Sans', 90), justify='center')
+            self.current_search_speed_value = customtkinter.CTkLabel(self, text=str(self.current_search_speed), anchor="center", text_color=successGreen, font=('Sans', 90), justify='center')
             self.current_search_speed_value.grid(row=11, column=0, padx=10, pady=(5, 0), sticky='ew')
             # MH/s
             self.current_search_speed_mhs = customtkinter.CTkLabel(self, text="MH/s", anchor="center", text_color=successGreen, font=('Sans', 18), justify='center')
             self.current_search_speed_mhs.grid(row=12, column=0, padx=10, pady=(0, 0), sticky='ew')
             # device data
-            self.device_data_value = customtkinter.CTkLabel(self, text=("Estimated Time: " +estimated_time + ("\n") + device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+            self.device_data_value = customtkinter.CTkLabel(self, text=("Estimated Time: " +self.estimated_time + ("\n") + self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
             self.device_data_value.grid(row=15, column=0, padx=30, pady=(30, 10))
-        if is_errored:
+        if self.is_errored:
             # search failed
             self.current_search_speed_label = customtkinter.CTkLabel(self, text=("Search Failed"), anchor="center", font=('Sans', 14), justify='center')
             self.current_search_speed_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky='ew')  
@@ -153,29 +164,73 @@ class SearchScreen(customtkinter.CTkFrame):
             self.current_search_err_label = customtkinter.CTkLabel(self, text="FATAL ERROR", anchor="center", text_color=errorRed, font=('Sans', 70), justify='center')
             self.current_search_err_label.grid(row=11, column=0, padx=10, pady=(20, 0), sticky='ew')
             # error msg
-            self.current_search_err_label_text = customtkinter.CTkLabel(self, text=error_message, anchor="center", text_color=redLight, font=('Sans', 15), justify='center')
+            self.current_search_err_label_text = customtkinter.CTkLabel(self, text=self.error_message, anchor="center", text_color=redLight, font=('Sans', 15), justify='center')
             self.current_search_err_label_text.grid(row=12, column=0, padx=10, pady=(0, 0), sticky='ew')
             # device data
-            self.device_data_value = customtkinter.CTkLabel(self, text=(device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+            self.device_data_value = customtkinter.CTkLabel(self, text=(self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
             self.device_data_value.grid(row=15, column=0, padx=30, pady=(45, 5))
-        if is_found:  
+        if self.is_found:  
             self.value_found = customtkinter.CTkLabel(self, text="ADDRESS MATCH FOUND!", anchor="center", text_color=successGreen, font=('Sans', 35), justify='center')
             self.value_found.grid(row=11, column=0, padx=10, pady=(5, 0), sticky='ew')
             # address
-            self.address = customtkinter.CTkLabel(self, text=(found_address), anchor="center", font=('Sans', 13), text_color=successGreenDark, justify='center')
+            self.address = customtkinter.CTkLabel(self, text=(self.found_address), anchor="center", font=('Sans', 13), text_color=successGreenDark, justify='center')
             self.address.grid(row=13, column=0, padx=30, pady=(10, 5))
             # copy address button
             self.copy_address_button = customtkinter.CTkButton(master=self, command=self.copy_address, fg_color=successGreenDark, hover_color=successGreenDark, text="Copy Address")
             self.copy_address_button.grid(row=14, column=0, padx=160, pady=(0, 0), sticky="ew")
             # pkey
-            self.pkey = customtkinter.CTkLabel(self, text=(found_pky), anchor="center", font=('Sans', 13), text_color=redFaded, justify='center')
+            self.pkey = customtkinter.CTkLabel(self, text=(self.found_pky), anchor="center", font=('Sans', 13), text_color=redFaded, justify='center')
             self.pkey.grid(row=15, column=0, padx=30, pady=(10, 5))
             # copy pkey button
             self.copy_pkey_button = customtkinter.CTkButton(master=self, command=self.copy_pkey, fg_color=redDark, hover_color=redFaded, text="Copy Private Key")
             self.copy_pkey_button.grid(row=16, column=0, padx=160, pady=(0, 10), sticky="ew")
             # time elapsed & device data
-            self.device_data_value = customtkinter.CTkLabel(self, text=("Time Elapsed - " + time_to_find + ("\n") + device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+            self.device_data_value = customtkinter.CTkLabel(self, text=("Time Elapsed - " + self.time_to_find + ("\n") + self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
             self.device_data_value.grid(row=17, column=0, padx=30, pady=(15, 5))
+        self.update_gui()
+
+
+    def update_gui(self):
+        # Here you would update the labels in your GUI
+        if not self.miner_data_queue.empty():
+            data = self.miner_data_queue.get()
+            if data['state'] == MinerOutputState.MINING_SPEED:
+                if self.is_loading:
+                    self.is_loading = False
+                    # stop loading animation
+                    # Begin rendering text
+                print("Mining speed")
+                print(data['data'])
+                # self.current_search_speed = str(data['data']['speed'])
+                self.current_search_speed_value.configure(text=str(data['data']['speed']))
+                self.current_search_speed_mhs.configure(text=str(data['data']['units']))
+
+            if data['state'] == MinerOutputState.ERROR:
+                # search failed
+                self.current_search_speed_label = customtkinter.CTkLabel(self, text=("Search Failed"), anchor="center", font=('Sans', 14), justify='center')
+                self.current_search_speed_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky='ew')  
+                # error text
+                self.current_search_err_label = customtkinter.CTkLabel(self, text="FATAL ERROR", anchor="center", text_color=errorRed, font=('Sans', 70), justify='center')
+                self.current_search_err_label.grid(row=11, column=0, padx=10, pady=(20, 0), sticky='ew')
+                # error msg
+                self.current_search_err_label_text = customtkinter.CTkLabel(self, text=data['message'], anchor="center", text_color=redLight, font=('Sans', 15), justify='center')
+                self.current_search_err_label_text.grid(row=12, column=0, padx=10, pady=(0, 0), sticky='ew')
+                # device data
+                self.device_data_value = customtkinter.CTkLabel(self, text=(self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+                self.device_data_value.grid(row=15, column=0, padx=30, pady=(45, 5))
+            if data['state'] == MinerOutputState.FOUND:
+                print("Found address")
+                print(data)
+
+        # self.update()
+        # Schedule next GUI update
+        self.after(100, self.update_gui)  # updates every 100 ms
+
+    def destroy(self):
+        # Override the destroy method to terminate the process when the GUI is closed
+        self.data_collector_process.terminate()
+        self.data_collector_process.join()
+        super().destroy()
 
     def copy_address(self):
         address = self.address.cget("text")
