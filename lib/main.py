@@ -80,7 +80,7 @@ def address_can_be_mined(matching: str) -> bool:
 def init_miner(matching: str) -> Generator:
     # check if the address can be mined
     if not address_can_be_mined(matching):
-        yield {"message": "Address cannot be mined", "state": MinerOutputState.ERROR}
+        yield {"message": "Invalid Search String -  Address cannot be mined", "state": MinerOutputState.ERROR}
         return
 
     seed_private_key, seed_public_key = create_seed_wallet()
@@ -134,11 +134,6 @@ def init_miner(matching: str) -> Generator:
                     total = float(match.group('total'))
                     unit = match.group('unit')
                     yield {"data": {"speed": total, "units": unit}, "state": MinerOutputState.MINING_SPEED}
-
-def dummy_miner(matching: str) -> Generator:
-    while True:
-        yield {"data": "70 MH/S", "state": MinerOutputState.MINING_SPEED}
-        time.sleep(1)
 
 def start_search(search_string: str):
     miner = init_miner(search_string)
