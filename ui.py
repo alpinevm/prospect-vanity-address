@@ -313,7 +313,7 @@ class SearchScreen(customtkinter.CTkFrame):
 
         # self.update()
         # Schedule next GUI update
-        self.after(100, self.update_gui)  # updates every 100 ms
+        self.after(10, self.update_gui)  # updates every 100 ms
 
     def destroy(self):
         # Override the destroy method to terminate the process when the GUI is closed
