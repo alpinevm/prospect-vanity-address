@@ -76,16 +76,16 @@ class App(customtkinter.CTk):
         self.button_frame = customtkinter.CTkFrame(self)
         self.button_frame.grid(row=2, column=0, pady=(20, 10))
         # start button
-        self.start_button = customtkinter.CTkButton(self.button_frame, width=40, text="START", fg_color=("white", primary_blue), hover_color=(mid_blue))
+        self.start_button = customtkinter.CTkButton(self.button_frame, width=45, height=28, text="START", font=("Arial", 13, 'bold'), fg_color=("white", primary_blue), hover_color=(mid_blue))
         self.start_button.bind("<Button-1>", self.toggle_ends_button)
         self.start_button.pack(side="left", padx=2)
         #end button
-        self.end_button = customtkinter.CTkButton(self.button_frame, text="END", width=40, fg_color=("white", dark_gray), hover_color=(mid_blue))
+        self.end_button = customtkinter.CTkButton(self.button_frame, text="END", width=45, height=28, font=("Arial", 12, 'bold'), fg_color=("white", dark_gray), hover_color=(mid_blue))
         self.end_button.bind("<Button-1>", self.toggle_starts_button)
         self.end_button.pack(side="left", padx=2)
 
         # Start Search Button
-        self.search_button = customtkinter.CTkButton(master=self, command=self.start_search, height=40, text="START SEARCH", state="disabled", bg_color=self.cget('bg'))
+        self.search_button = customtkinter.CTkButton(master=self, command=self.start_search, height=40, text="START SEARCH", font=("Helvetica", 15, "bold"), state="disabled", bg_color=self.cget('bg'))
         self.search_button.grid(row=6, column=0, padx=200, pady=(12, 20), sticky="ew")
 
     def toggle_ends_button(self, event):
