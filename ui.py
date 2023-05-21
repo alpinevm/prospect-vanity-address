@@ -97,7 +97,14 @@ class App(customtkinter.CTk):
         self.start_button.configure(fg_color=("white", dark_gray))
 
     def enable_search_button(self, event):
-        #TODO add isSearching bool check
+        # Enable Search Entry
+        self.search_entry.configure(state='normal')
+        # Stop search if typing
+        try:
+            self.stop_search()
+        except:
+            pass
+        # Enable Search Button
         self.search_button.configure(state="normal", fg_color=(primary_blue), hover_color=(tertiary_blue), bg_color=self.cget('bg'))
 
     def start_search(self):        
@@ -265,23 +272,23 @@ class SearchScreen(customtkinter.CTkFrame):
                     self.device_data_value.destroy()
                 except:
                     pass
-                self.value_found = customtkinter.CTkLabel(self, text="ADDRESS MATCH FOUND!", anchor="center", text_color=successGreen, font=('Sans', 35), justify='center')
-                self.value_found.grid(row=11, column=0, padx=10, pady=(5, 0), sticky='ew')
+                self.value_found = customtkinter.CTkLabel(self, text="ADDRESS MATCH FOUND!", anchor="center", text_color=successGreen, font=('Sans', 26, 'bold'), justify='center')
+                self.value_found.grid(row=11, column=0, padx=10, pady=(10, 5), sticky='ew')
                 # address
                 self.address_label = customtkinter.CTkLabel(self, text=(self.found_address), anchor="center", font=('Sans', 13), text_color=successGreenDark, justify='center')
                 self.address_label.grid(row=13, column=0, padx=30, pady=(10, 5))
                 # copy address button
                 self.copy_address_button = customtkinter.CTkButton(master=self, command=self.copy_address, fg_color=successGreenDark, hover_color=successGreenDark, text="Copy Address")
-                self.copy_address_button.grid(row=14, column=0, padx=160, pady=(0, 0), sticky="ew")
+                self.copy_address_button.grid(row=14, column=0, padx=180, pady=(0, 0), sticky="ew")
                 # pkey
                 self.pkey_label = customtkinter.CTkLabel(self, text=(self.found_pky), anchor="center", font=('Sans', 13), text_color=redFaded, justify='center')
                 self.pkey_label.grid(row=15, column=0, padx=30, pady=(10, 5))
                 # copy pkey button
                 self.copy_pkey_button = customtkinter.CTkButton(master=self, command=self.copy_pkey, fg_color=redDark, hover_color=redFaded, text="Copy Private Key")
-                self.copy_pkey_button.grid(row=16, column=0, padx=160, pady=(0, 10), sticky="ew")
+                self.copy_pkey_button.grid(row=16, column=0, padx=180, pady=(0, 10), sticky="ew")
                 # time elapsed & device data
                 self.device_data_value = customtkinter.CTkLabel(self, text=("Time Elapsed - " + (str(format_time(time.time() - self.start_time))) + ("\n") + self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
-                self.device_data_value.grid(row=17, column=0, padx=30, pady=(15, 5))
+                self.device_data_value.grid(row=17, column=0, padx=30, pady=(20, 5))
 
                 if self.address_label.cget("text") != data['data']['address']:
                     self.address_label.configure(text=str(data['data']['address']))
