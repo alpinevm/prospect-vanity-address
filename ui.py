@@ -1,4 +1,6 @@
 import sys
+import statistics
+import math
 import tkinter
 import tkinter.messagebox
 from lib.main import MinerOutputState, start_search, init_miner
@@ -9,8 +11,8 @@ from multiprocessing import Process, Queue
 import time
 
 # This function runs in a separate process
-def data_collector(queue, search_str):
-    datafeed = init_miner(search_str) 
+def data_collector(queue, search_str, prefix):
+    datafeed = init_miner(search_str, prefix) 
     for data in datafeed:
         queue.put(data)
     print("Exiting miner process")
@@ -54,6 +56,7 @@ class App(customtkinter.CTk):
 
         # configure grid layout
         self.grid_columnconfigure(0, weight=1)
+        self.prefix = True 
 
         # ASCII
         self.title_label = tkinter.Text(self, bg=self.cget('bg'), height=9, width=180, bd=0, highlightthickness=0, fg="white")
@@ -89,10 +92,12 @@ class App(customtkinter.CTk):
         self.search_button.grid(row=6, column=0, padx=200, pady=(12, 20), sticky="ew")
 
     def toggle_ends_button(self, event):
+        self.prefix = True 
         self.start_button.configure(fg_color=("white", primary_blue))
         self.end_button.configure(fg_color=("white", dark_gray))
 
     def toggle_starts_button(self, event):
+        self.prefix = False
         self.end_button.configure(fg_color=("white", primary_blue))
         self.start_button.configure(fg_color=("white", dark_gray))
 
@@ -109,7 +114,15 @@ class App(customtkinter.CTk):
 
     def start_search(self):        
         # Create Search Screen
-        self.search_screen = SearchScreen(master=self, width=600, search_str=self.search_entry.get(), height=400, corner_radius=10, bg_color=self.cget('bg'))
+        self.search_screen = SearchScreen(
+                master=self,
+                width=600,
+                search_str=self.search_entry.get(),
+                prefix=self.prefix,
+                height=400,
+                corner_radius=10,
+                bg_color=self.cget('bg')
+            )
         self.search_screen.grid(row=10, rowspan=10, pady=(0, 5), column=0)
         # Resize Window
         self.geometry(f"{600}x{600}")
@@ -129,15 +142,18 @@ class App(customtkinter.CTk):
         self.search_entry.configure(state='normal')
 
 class SearchScreen(customtkinter.CTkFrame):
-    def __init__(self, master, search_str, **kwargs):
+    def __init__(self, master, search_str, prefix: bool, **kwargs):
         super().__init__(master, **kwargs)
         # DATA
         self.search_str = search_str 
         self.master = master
         self.kwargs = kwargs
 
+        self.calculated_sim = False
+        self.last_ten_mining_steps = []
+
         self.miner_data_queue = Queue()
-        self.data_collector_process = Process(target=data_collector, args=(self.miner_data_queue, search_str,))
+        self.data_collector_process = Process(target=data_collector, args=(self.miner_data_queue, search_str,prefix,))
         self.data_collector_process.start()
 
         self.is_loading = True
@@ -177,6 +193,13 @@ class SearchScreen(customtkinter.CTkFrame):
         self.first_time_loading = True # this is just to make sure the loading screen only shows once
         self.update_gui()
 
+    def esimate_time(self, z_targetprob, v_attemptspersecond):
+        # Calculate z_targetprobability
+        # Calculate p_guess
+        p_guess = 16 ** (40 - len(self.search_str)) / 16 ** 40 
+        # Calculate x
+        x = abs((-math.log(1 - z_targetprob / 100)) / (math.log(1 - p_guess) * v_attemptspersecond))
+        return x
 
     def update_gui(self):
         def format_time(seconds):
@@ -202,6 +225,21 @@ class SearchScreen(customtkinter.CTkFrame):
             
             # SEARCHING SCREEN
             if data['state'] == MinerOutputState.MINING_SPEED:
+                if not self.calculated_sim:
+                    current_search_speed = data['data']['speed']
+                    units: str = data['data']['units']
+                    if units.lower().startswith('h'):
+                        pass 
+                    elif units.lower().startswith('kh'):
+                        current_search_speed = current_search_speed * 1000
+                    elif units.lower().startswith('mh'):
+                        current_search_speed = current_search_speed * 1000000
+                    elif units.lower().startswith('gh'):
+                        current_search_speed = current_search_speed * 1000000000
+                    elif units.lower().startswith('th'):
+                        current_search_speed = current_search_speed * 1000000000000
+                    self.last_ten_mining_steps.append(current_search_speed)
+
                 # calculate time elapsed
                 self.end_time = time.time()
                 self.time_elapsed = self.end_time - self.start_time
@@ -211,7 +249,29 @@ class SearchScreen(customtkinter.CTkFrame):
                     self.loading_2.destroy()
                 except:
                     pass
+                if not self.calculated_sim and len(self.last_ten_mining_steps) == 10:
+                    # if you got access to something higher, well then you've got higher priorities than this 
+                    # calculate median 
+                    self.calculated_sim = True
+                    current_search_speed = statistics.median(self.last_ten_mining_steps)
+                    p50 = self.esimate_time(50, current_search_speed)
+                    p90 = self.esimate_time(90, current_search_speed)
+                    p99 = self.esimate_time(99, current_search_speed)
+
+                    esimated_time_str = "Estimated Time: " + format_time(p50) + " (50%) " + format_time(p90) + " (90%) " + format_time(p99) + " (99%)"
+
+                    self.device_data_value = customtkinter.CTkLabel(self, text=(esimated_time_str + ("\n") + self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+                    self.device_data_value.grid(row=15, column=0, padx=30, pady=(30, 10))
+
+                    print("Median Search Speed (10 steps): " + str(current_search_speed))
+                    print("p50: " + str(p50))
+                    print("p90: " + str(p90))
+                    print("p99: " + str(p99))
+
                 if self.first_time_loading:
+                    # calculate search speed
+                    
+
                     # time elapsed
                     self.start_time = time.time()
                     self.current_search_speed_label = customtkinter.CTkLabel(self, text=("Time Elapsed: " + str(time.time() - self.start_time)), anchor="center", font=('Sans', 14), justify='center')
@@ -222,8 +282,7 @@ class SearchScreen(customtkinter.CTkFrame):
                     # MH/s
                     self.current_search_speed_mhs = customtkinter.CTkLabel(self, text="MH/s", anchor="center", text_color=successGreen, font=('Sans', 18), justify='center')
                     self.current_search_speed_mhs.grid(row=12, column=0, padx=10, pady=(0, 0), sticky='ew')
-                    # device data
-                    self.device_data_value = customtkinter.CTkLabel(self, text=("Estimated Time: " + self.estimated_time + ("\n") + self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
+                    self.device_data_value = customtkinter.CTkLabel(self, text=(self.device_data), anchor="center", font=('Sans', 12), text_color='#777777', justify='center')
                     self.device_data_value.grid(row=15, column=0, padx=30, pady=(30, 10))
                     # to not rerender entire screen
                     self.first_time_loading = False

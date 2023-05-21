@@ -31,6 +31,22 @@ class TriggerPhrases:
     MINING_SPEED = "Total:"
 
 
+
+def simple_miner(matching: str, prefix=True) -> Generator:
+    print("Using simple miner...")
+    while True:
+        randomness = os.urandom(32)
+        wallet: LocalAccount = w3.eth.account.create(randomness)
+        if validate_wallet(wallet.address, matching, prefix=prefix):
+            yield {
+                "data": {
+                    "address": wallet.address,
+                    "private_key": wallet.key.hex()
+                },
+                "state": MinerOutputState.FOUND
+            }
+            break
+
 # Get's the filename of the binary needed based on the users OS and architecture
 def binary_switcher() -> tuple:
     op_s = platform.system()
@@ -60,10 +76,9 @@ def create_seed_wallet() -> tuple[str, str]:
 def calculate_final_key(seed_private_key: str, mined_key: str) -> str:
     return hex((int(seed_private_key, 16) + int(mined_key, 16)) % 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F)
 
-def sanity_check(address: str, matching: str, prefix: bool = True) -> bool:
+def validate_wallet(address: str, matching: str, prefix: bool = True) -> bool:
     address = address.lower()[2:]
     matching = matching.lower()
-    print("sanity demon", address, matching)
     if prefix:
         return address.startswith(matching)
     else:
@@ -71,17 +86,31 @@ def sanity_check(address: str, matching: str, prefix: bool = True) -> bool:
 
 def address_can_be_mined(matching: str) -> bool:
     # check each character see if they are a valid hex character
+    if len(matching) > 40:
+        return False
     for char in matching:
         if char not in "0123456789abcdef":
             return False
     return True
 
+def fill_matching(matching: str, prefix=True) -> str:
+    if prefix:
+        return matching + "X" * (40 - len(matching))
+    return "X" * (40 - len(matching)) + matching
+
 # only handle leading matches
-def init_miner(matching: str) -> Generator:
+def init_miner(matching: str, prefix=True) -> Generator:
     # check if the address can be mined
     if not address_can_be_mined(matching):
         yield {"message": "Invalid Search String -  Address cannot be mined", "state": MinerOutputState.ERROR}
         return
+    
+    if len(matching) <= 2:
+        # run simple miner, b/c of profanity2 bug
+        # b/c this is so compuationally likely,
+        # we can just run it in the main thread (and in python)
+        yield from simple_miner(matching, prefix=prefix)
+        return;
 
     seed_private_key, seed_public_key = create_seed_wallet()
     try:
@@ -92,7 +121,7 @@ def init_miner(matching: str) -> Generator:
 
     # Start the miner
     print("Starting miner...")
-    process = subprocess.Popen([miner_binary, "--matching", matching, "-z", seed_public_key[2:]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=binary_dir)
+    process = subprocess.Popen([miner_binary, "--matching", fill_matching(matching, prefix), "-z", seed_public_key[2:]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=binary_dir)
     # creating mining stderr reading thread
     
     STATE = InternalState.STARTING
@@ -119,11 +148,10 @@ def init_miner(matching: str) -> Generator:
                     address = match.group('address')
                     # calculate final key
                     final_key = calculate_final_key(seed_private_key, private_key)
+                    print("Found key", final_key)
+
                     # check if key matches the address
-                    print("Address", address, "Private Key", final_key)
-                    print("Potential address", address)
-                    print("True address", w3.eth.account.from_key(final_key).address.lower())
-                    if address.lower() == w3.eth.account.from_key(final_key).address.lower() and sanity_check(address, matching, prefix=True):
+                    if address.lower() == w3.eth.account.from_key(final_key).address.lower() and validate_wallet(address, matching, prefix=prefix):
                         yield {"data": {"address": address, "private_key": final_key}, "state": MinerOutputState.FOUND}
                         #TODO: Change this to not be a kill when we switch to leading
                         process.kill()
