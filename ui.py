@@ -173,6 +173,8 @@ class SearchScreen(customtkinter.CTkFrame):
 
     def update_gui(self):
         def format_time(seconds):
+            if seconds > 1000000000:
+                return "< 0.01 seconds"
             if seconds < 60:
                 return f"{seconds:.2f} seconds"
             elif seconds < 3600:
