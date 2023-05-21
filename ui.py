@@ -105,10 +105,10 @@ class App(customtkinter.CTk):
         # Enable Search Entry
         self.search_entry.configure(state='normal')
         # Stop search if typing
-        try:
-            self.stop_search()
-        except:
-            pass
+        # try:
+        #     self.stop_search()
+        # except:
+        #     pass
         # Enable Search Button
         self.search_button.configure(state="normal", fg_color=(primary_blue), hover_color=(tertiary_blue), bg_color=self.cget('bg'))
 
@@ -117,7 +117,7 @@ class App(customtkinter.CTk):
         self.search_screen = SearchScreen(
                 master=self,
                 width=600,
-                search_str=self.search_entry.get(),
+                search_str=(self.search_entry.get().lower()),
                 prefix=self.prefix,
                 height=400,
                 corner_radius=10,
@@ -145,7 +145,7 @@ class SearchScreen(customtkinter.CTkFrame):
     def __init__(self, master, search_str, prefix: bool, **kwargs):
         super().__init__(master, **kwargs)
         # DATA
-        self.search_str = search_str 
+        self.search_str = search_str
         self.master = master
         self.kwargs = kwargs
 
@@ -360,7 +360,6 @@ class SearchScreen(customtkinter.CTkFrame):
                 try:
                     self.loading.destroy()
                     self.loading_2.destroy()
-                    print("DESTROYED LOADING SCREEN")
                 except:
                     pass
                 # search failed
