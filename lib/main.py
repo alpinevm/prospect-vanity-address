@@ -17,7 +17,6 @@ class MinerOutputState (enum.Enum):
     FOUND = 2
     ERROR = 3
     DEVICE_DATA = 4
-
     INITIALIZING = 5
 
 class InternalState (enum.Enum):
@@ -64,6 +63,7 @@ def calculate_final_key(seed_private_key: str, mined_key: str) -> str:
 def sanity_check(address: str, matching: str, prefix: bool = True) -> bool:
     address = address.lower()[2:]
     matching = matching.lower()
+    print("sanity demon", address, matching)
     if prefix:
         return address.startswith(matching)
     else:
@@ -120,6 +120,9 @@ def init_miner(matching: str) -> Generator:
                     # calculate final key
                     final_key = calculate_final_key(seed_private_key, private_key)
                     # check if key matches the address
+                    print("Address", address, "Private Key", final_key)
+                    print("Potential address", address)
+                    print("True address", w3.eth.account.from_key(final_key).address.lower())
                     if address.lower() == w3.eth.account.from_key(final_key).address.lower() and sanity_check(address, matching, prefix=True):
                         yield {"data": {"address": address, "private_key": final_key}, "state": MinerOutputState.FOUND}
                         #TODO: Change this to not be a kill when we switch to leading
