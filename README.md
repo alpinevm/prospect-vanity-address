@@ -56,8 +56,7 @@ Prospect can be installed in two ways:
 - [ ] Better input UI
 
 [profanity2]: https://github.com/1inch/profanity2
-[downloads-badge]: https://
+[downloads-badge]: https://img.shields.io/github/downloads/alpinevm/prospect-vanity-address/total?logo=github&lo
 [tutorial]: github/demo.webp
-[downloads-badge]: https://img.shields.io/github/downloads/ajeetdsouza/zoxide/total?logo=github&logoColor=white&style=flat-square
 [releases]: https://github.com/alpinevm/prospect-vanity-address/releases
 [issues]: https://github.com/alpinevm/prospect-vanity-address/issues/new
