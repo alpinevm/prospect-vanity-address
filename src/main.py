@@ -3,7 +3,7 @@ import statistics
 import math
 import tkinter
 import tkinter.messagebox
-from lib.main import MinerOutputState, start_search, init_miner
+from lib import MinerOutputState, init_miner 
 import customtkinter
 from tkinter import StringVar
 import pyperclip

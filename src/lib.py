@@ -1,7 +1,5 @@
 import os
-import threading
 import re
-import time
 import platform
 from typing import Generator
 import enum
@@ -29,8 +27,6 @@ class TriggerPhrases:
     READ_DEVICES_END = "Initializing OpenCL..." 
     GEN_KEY = "Private:"
     MINING_SPEED = "Total:"
-
-
 
 def simple_miner(matching: str, prefix=True) -> Generator:
     print("Using simple miner...")
@@ -106,8 +102,8 @@ def init_miner(matching: str, prefix=True) -> Generator:
         return
     
     if len(matching) <= 2:
-        # run simple miner, b/c of profanity2 bug
-        # b/c this is so compuationally likely,
+        # run simple miner, b/c of profanity2 bug...
+        # b/c this is so compuationally light,
         # we can just run it in the main thread (and in python)
         yield from simple_miner(matching, prefix=prefix)
         return;
@@ -166,12 +162,12 @@ def init_miner(matching: str, prefix=True) -> Generator:
                     unit = match.group('unit')
                     yield {"data": {"speed": total, "units": unit}, "state": MinerOutputState.MINING_SPEED}
 
-def start_search(search_string: str):
+def test_search(search_string: str):
     miner = init_miner(search_string)
     for data in miner:
-        print("FROM GEN", data)
+        print("Generator:", data)
 
 if __name__ == '__main__':
     string = input("Enter search string: ")
-    start_search(string)
+    test_search(string)
     
