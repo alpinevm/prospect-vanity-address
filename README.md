@@ -54,6 +54,7 @@ Prospect can be installed in two ways:
 - [ ] Linux Binaries 
 - [ ] Windows Binaries 
 - [ ] Better input UI
+- [ ] Export encrypted keystore json
 
 [profanity2]: https://github.com/1inch/profanity2
 [downloads-badge]: https://img.shields.io/github/downloads/alpinevm/prospect-vanity-address/total?logo=github&lo
