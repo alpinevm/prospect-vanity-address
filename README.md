@@ -26,7 +26,7 @@ It integrates [profanity2] as its mining engine and employs well-established cry
     ```bash
     git clone https://github.com/alpinevm/prospect-vanity-address
     cd prospect-vanity-address
-    python3 -m pip install -r requirements
+    python3 -m pip install -r requirements.txt
     python3 src/main.py
     ```
     
