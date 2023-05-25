@@ -11,8 +11,6 @@
 
 # prospect
 
-[![Downloads][downloads-badge]][releases]
-
 Prospect provides a streamlined interface for **GPU-accelerated** Ethereum vanity address mining.<br>
 It integrates [profanity2] as its mining engine and employs well-established cryptographic practices for secure key generation.
 
@@ -24,19 +22,15 @@ It integrates [profanity2] as its mining engine and employs well-established cry
 ![Tutorial][tutorial]
 
 ## Installation
-
-Prospect can be installed in two ways:
-
-1. **Install Binary:**<br>
-   Prospect provides binaries for macOS arm64 and x86_64 machines (M1 Pro + M1 Max). If you require a binary for a different architecture, please [open an issue][issues].
-   <details>
-   <summary>macOS</summary>
-
-   > We recommend installation via the packaged [dmg](releases).
-    <br>
-   </details>
-
-2. **Manual Build:**<br>
+1. **macOs** <br>
+    ```bash
+    git clone https://github.com/alpinevm/prospect-vanity-address
+    cd prospect-vanity-address
+    python3 -m pip install -r requirements
+    python3 src/main.py
+    ```
+    
+2. **Other platforms:**<br>
    Detailed instructions will be provided soon. In the meantime, follow the steps below to build from source:
     - Prospect relies on [profanity2]. Build the binary from the profanity2 repository and move the binary and OpenCL files to the `/bin` directory.
     - Update `src/lib.py` with the path to your `profanity2` binary.
@@ -50,7 +44,7 @@ Prospect can be installed in two ways:
       ```
 
 ## TODO  
-- [x] macOS Binaries
+- [ ] macOS Binaries
 - [ ] Linux Binaries 
 - [ ] Windows Binaries 
 - [ ] Better input UI
